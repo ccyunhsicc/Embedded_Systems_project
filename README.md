@@ -5,18 +5,6 @@
 - **lab12_plate_recognition**：OpenALPR/Tesseract/Leptonica 車牌辨識，處理 6 碼與 7 碼、光線不足等問題。
 - **lab13_tvm_rpc**：從原始碼建置 TVM，於樹莓派啟動 RPC，測試 ResNet-18 推論並比較 opt_level 效能與記憶體。
 
-## 專案結構
-```
-embedded_labs_readmes/
-├─ README.md
-├─ lab11_pedestrian_detection/
-│  └─ README.md
-├─ lab12_plate_recognition/
-│  └─ README.md
-└─ lab13_tvm_rpc/
-   └─ README.md
-```
-
 ## 快速開始
 - **行人偵測（Lab 11）**  
   建議先建立 Python venv，安裝 `opencv-python imutils matplotlib` 後，使用 `processing.py`/`video_processing.py` 執行。
