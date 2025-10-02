@@ -1,65 +1,68 @@
-# 行人偵測專題 (Pedestrian Detection Project)
+# 實驗 11｜行人偵測專題（OpenCV + HOG/SVM）
 
-## 專案介紹
+## 簡介
+以 OpenCV 取得影像，運用 HOG 特徵配合 SVM 分類器進行行人偵測；延伸以影像金字塔與滑動視窗做多尺度偵測，並繪製每幀偵測人數的統計圖。
 
-本專案是一個關於**嵌入式系統軟體設計與實作**的實驗成果，旨在利用 **OpenCV** 函式庫在 **Raspberry Pi** 上實現基本的**行人偵測系統** 。透過影像處理技術，學習電腦視覺的基礎操作與技巧。
+## 目標
+- 熟悉 OpenCV 影像 I/O 與基本處理。
+- 瞭解 HOG 特徵、SVM 分類器與 NMS 的偵測流程。
+- 撰寫腳本對影片逐幀統計行人數量，產生圖表。
 
------
+## 專案結構（建議）
+```
+lab11_pedestrian_detection/
+├─ README.md
+├─ env/                # Python 虛擬環境（可選）
+├─ processing.py       # 影像/相片偵測
+├─ video_processing.py # 影片逐幀偵測
+├─ sample.py           # 自行完成之範例
+├─ test_opencv.py      # OpenCV 測試
+├─ data/
+│  ├─ image.jpg        # 測試影像
+│  └─ video.mp4        # 測試影片（可自備）
+└─ results/
+   ├─ frames/          # 輸出逐幀標註影像
+   └─ people_count.png # 行人數量統計圖
+```
 
-## 實驗目標
+## 需求與安裝
+- Python 3.10+（或相容版本）
+- OpenCV、imutils、matplotlib
 
-  * 學習利用 **OpenCV** 取得影像資訊、進行圖像處理，並最終完成**行人偵測**。
-  * 掌握基本的**電腦視覺處理技巧**及**影像基本操作**。
-  * 熟悉如何在 **Raspberry Pi** 嵌入式系統上使用 **OpenCV**。
-  * **延伸應用**：對影片中的行人進行分析，並使用圖表統計每一幀偵測到的行人數量。
+```bash
+python -m venv env
+source env/bin/activate  # Windows: env\Scripts\activate
+pip install opencv-python imutils matplotlib
+python test_opencv.py
+```
 
------
+（若需擷取相片）
+```bash
+sudo apt install fswebcam
+fswebcam -r 1280x720 --no-banner ./data/image.jpg
+```
 
-## 環境設置與執行步驟
+## 使用方式
+- 單張影像偵測：
+```bash
+python processing.py --image ./data/image.jpg --out ./results/frames
+```
 
-本實驗主要在 **Raspberry Pi** 上進行操作。
+- 影片偵測與人數統計：
+```bash
+python video_processing.py --video ./data/video.mp4 --save ./results/frames
+# 於腳本內累加每幀偵測人數，結束時輸出 results/people_count.png
+```
 
-### 1\. 遠端連線與檔案傳輸
+## 方法摘要（HOG/SVM）
+1. **梯度計算**：取得每像素水平/垂直梯度與方向。
+2. **Cell 分箱**：分割為 cells，依方向直方圖累加梯度強度。
+3. **Block 正規化**：鄰近 cells 向量串接並正規化，降低光照影響。
+4. **特徵拼接**：全圖（或滑動視窗）之 HOG 向量。
+5. **分類與後處理**：以線性 SVM 分類、多尺度金字塔+滑動視窗掃描，最後以 NMS 合併重疊框。
 
-| 步驟 | 說明 | 指令 (範例) |
-| :--- | :--- | :--- |
-| **SSH 連線** | 連線到樹莓派，使用 `-X` 啟用 X11 forwarding，以在本機顯示圖形界面。 | `ssh -X yunhsihsu@172.16.1.53`  |
-| **SFTP 傳輸** | 使用 SFTP 將專案檔案傳送到樹莓派上。 | `sftp yunhsihsu@172.16.1.53`  <br> `putr ./pedestrian_detection`  |
+## 常見問題
+- **環境缺套件**：請確認 `opencv-python`、`imutils`、`matplotlib` 已安裝且 Python 版本相容。
+- **FPS 過低**：可降低輸入影像解析度或調整滑動視窗步長與尺度層數。
+- **誤判/漏判**：嘗試調整 SVM 閾值、NMS 參數，或以更適合場景的模型替換（例如 DNN-based detector）。
 
-### 2\. 環境設置與套件安裝
-
-在樹莓派上設置 Python 虛擬環境並安裝所需套件。
-
-| 步驟 | 說明 | 指令 |
-| :--- | :--- | :--- |
-| **安裝 Python 3** | 安裝 Python 3。 | `sudo apt install python3`  |
-| **創建虛擬環境** | 創建名為 `env` 的虛擬環境。 | `python -m venv env`  |
-| **啟用虛擬環境** | 啟用虛擬環境。 | `source env/bin/activate`  |
-| **安裝套件** | 安裝 **OpenCV** 和 **imutils** 等必要套件。 | `pip install opencv-python imutils`  |
-| **環境測試** | 執行測試程式確認 OpenCV 是否安裝成功。 | `python test_opencv.py`  |
-
-### 3\. 實驗操作與執行
-
-| 步驟 | 檔案 | 說明 | 指令 |
-| :--- | :--- | :--- | :--- |
-| **圖像處理** | `processing.py` | 觀察並執行單張圖像處理的程式。 | `python processing.py`  |
-| **影片處理** | `video_processing.py` | 觀察並執行影片處理程式，進行行人偵測。 | `python video_processing.py`  |
-| **拍照測試** | N/A | 安裝 `fswebcam` 並拍照測試。 | `sudo apt install fswebcam`  <br> `fswebcam -r 1280x720 --no-banner ./image.jpg`  |
-| **結果產生** | `sample.py` | 完成並執行 `sample.py` 以產生最終結果圖。 | `python sample.py`  |
-
------
-
-## 延伸應用：影片中行人數量統計
-
-為了強化對影片與即時影像資料的處理能力，本專案進行了延伸應用：**統計影片中每個時間點出現的行人數量**。
-
-### 實作方式
-
-  * 修改了 `video_processing.py` 程式碼，統計每一幀偵測到的行人出現次數。
-  * 使用 Python 的 **matplotlib** 模組進行圖表繪製，視覺化結果。
-
-### 結果圖
-
-下圖展示了影片幀數（Time [s]）與偵測到的行人數量（Number of People）的關係:
-
-圖表顯示，在影片的特定時刻，偵測到的行人數量最高可達 2 位。
